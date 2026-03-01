@@ -1,4 +1,4 @@
-# This repository contains code to reproduce the experiments in an anonymized ECML submission.
+# This repository contains code to reproduce the experiments in an Aumann-SHAP.
 
 # 
 
