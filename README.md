@@ -1,7 +1,3 @@
-# \# ECML submission (anonymous)
-
-# 
-
 # This repository contains code to reproduce the experiments in an anonymized ECML submission.
 
 # 
@@ -12,5 +8,15 @@
 
 # pip install -r requirements.txt
 
-# python scripts/download\_data.py
+# 
+
+# \# German Credit (main)
+
+# python experiments/run\_german\_credit.py --task convergence
+
+# 
+
+# \# MNIST (main)
+
+# python experiments/run\_mnist.py --task patchtest
 
