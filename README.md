@@ -1,4 +1,4 @@
-# \# Aumann-SHAP Experiments 
+# \# Aumann-SHAP Experiments
 
 # 
 
@@ -102,7 +102,7 @@
 
 # 
 
-# Some scripts depend on files created by earlier scripts (caches/artifacts/checkpoints).  
+# Some scripts depend on files created by earlier scripts (caches/artifacts/checkpoints).
 
 # Use the documented order here:
 
@@ -128,7 +128,7 @@
 
 # \- German Credit uses a pretrained cached model included at:
 
-# &nbsp; experiments/german\_credit/cache/models\_split\_rs1.joblib
+#   experiments/german\_credit/cache/models\_split\_rs1.joblib
 
 # \- MNIST training can be skipped if the checkpoint already exists.
 
@@ -138,15 +138,31 @@
 
 # 
 
+
+
+
+
+Package (optional):
+
+pip install -e .
+
+Python usage:
+
+from aumann\_shap import explain\_tabular\_gridstate
+
+
+
+
+
 # \## Project structure
 
 # 
 
-# docs/                 reproducibility + anonymity notes  
+# docs/                 reproducibility + anonymity notes
 
-# experiments/          entrypoints + dataset-specific scripts  
+# experiments/          entrypoints + dataset-specific scripts
 
-# requirements.txt      dependencies  
+# requirements.txt      dependencies
 
 # LICENSE               MIT license
 
