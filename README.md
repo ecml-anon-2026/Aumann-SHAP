@@ -1,4 +1,4 @@
-# Aumann-SHAP Experiments (Anonymous ECML Submission)
+# Aumann-SHAP Experiments
 
 This repository contains the code required to reproduce the experiments presented in the **Aumann-SHAP** study.
 
