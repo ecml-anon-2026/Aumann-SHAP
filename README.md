@@ -5,6 +5,7 @@ This repository contains the code required to reproduce the experiments presente
 It includes evaluation pipelines for:
 - **German Credit** (tabular counterfactual attribution + interaction analysis)
 - **MNIST (1 → 7)** (pixel attributions, heatmaps, patch test, global explanations)
+<img width="1393" height="331" alt="image" src="https://github.com/user-attachments/assets/e8e5f9d5-4b84-447d-a8e3-9af4aa3fa148" />
 
 ---
 
