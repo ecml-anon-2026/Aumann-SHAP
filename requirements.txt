@@ -3,6 +3,6 @@ pandas
 scikit-learn
 joblib
 matplotlib
-tqdm
 torch
 torchvision
+xgboost
