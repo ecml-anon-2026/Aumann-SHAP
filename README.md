@@ -120,10 +120,11 @@ def g(x: pd.Series) -> float:
     return float(np.tanh(0.8*x["x1"] + 0.4*x["x2"] + 0.6*x["x1"]*x["x2"]))
 
 # Vectorized batch version required for backend="mc"
-def g_batch(X: pd.DataFrame) -> np.ndarray:
-    x1 = X["x1"].to_numpy(dtype=float)
-    x2 = X["x2"].to_numpy(dtype=float)
-    return np.tanh(0.8*x1 + 0.4*x2 + 0.6*x1*x2).astype(float)
+def g_batch(X):
+    X = np.asarray(X, dtype=float)   # shape: (B, d)
+    x1 = X[:, 0]
+    x2 = X[:, 1]
+    return np.tanh(0.8*x1 + 0.4*x2 + 0.6*x1*x2)
 
 x0 = pd.Series({"x1": 0.0, "x2": 0.0})
 x1 = pd.Series({"x1": 1.0, "x2": 1.0})
