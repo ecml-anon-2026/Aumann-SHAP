@@ -119,20 +119,12 @@ from aumann_shap import explain
 def g(x: pd.Series) -> float:
     return float(np.tanh(0.8*x["x1"] + 0.4*x["x2"] + 0.6*x["x1"]*x["x2"]))
 
-# Vectorized batch version required for backend="mc"
-def g_batch(X):
-    X = np.asarray(X, dtype=float)   # shape: (B, d)
-    x1 = X[:, 0]
-    x2 = X[:, 1]
-    return np.tanh(0.8*x1 + 0.4*x2 + 0.6*x1*x2)
-
 x0 = pd.Series({"x1": 0.0, "x2": 0.0})
 x1 = pd.Series({"x1": 1.0, "x2": 1.0})
 
 totals, within_pot = explain(
     g, x0, x1,
     backend="mc",
-    model_batch=g_batch,
     m=10,
     n_perms=300,
     seed=0
@@ -142,6 +134,7 @@ print("Totals (MC estimate):")
 print(totals)
 print("within_pot:", within_pot)  # None for MC
 ```
+If your model supports batch prediction (sklearn/xgboost/torch), explain uses it automatically; otherwise it falls back to per-row evaluation (may be slower).
 ---
 
 ## Project structure
