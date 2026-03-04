@@ -84,7 +84,56 @@ Minimal usage:
   totals, within_pot = explain(model, x0, x1, backend="mc", model_batch=..., m=10, n_perms=200)
 
 (Within-pot is only returned for the exact grid-state backend.)
+## Usage for ML (Tabular data)
 
+### 1) Minimal example (exact grid-state micro-game Shapley)
+
+```python
+import numpy as np
+import pandas as pd
+from aumann_shap import explain
+
+# Any callable f(pd.Series) -> float works
+def g(x: pd.Series) -> float:
+    return float(np.tanh(0.8*x["x1"] + 0.4*x["x2"] + 0.6*x["x1"]*x["x2"]))
+
+x0 = pd.Series({"x1": 0.0, "x2": 0.0})
+x1 = pd.Series({"x1": 1.0, "x2": 1.0})
+
+totals, within_pot = explain(g, x0, x1, backend="grid_state", m=5)
+
+print("Totals (sum to Δ):")
+print(totals)
+print("\nWithin-pot:")
+print(within_pot)
+```
+---
+
+### 2) Monte Carlo micro-game Shapley (Totals only)
+
+```python
+import numpy as np
+import pandas as pd
+from aumann_shap import explain
+
+def g(x: pd.Series) -> float:
+    return float(np.tanh(0.8*x["x1"] + 0.4*x["x2"] + 0.6*x["x1"]*x["x2"]))
+
+x0 = pd.Series({"x1": 0.0, "x2": 0.0})
+x1 = pd.Series({"x1": 1.0, "x2": 1.0})
+
+totals, within_pot = explain(
+    g, x0, x1,
+    backend="mc",
+    m=10,
+    n_perms=300,
+    seed=0
+)
+
+print("Totals (MC estimate):")
+print(totals)
+print("within_pot:", within_pot)  # None for MC
+```
 ---
 
 ## Project structure
