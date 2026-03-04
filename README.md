@@ -119,12 +119,19 @@ from aumann_shap import explain
 def g(x: pd.Series) -> float:
     return float(np.tanh(0.8*x["x1"] + 0.4*x["x2"] + 0.6*x["x1"]*x["x2"]))
 
+# Vectorized batch version required for backend="mc"
+def g_batch(X: pd.DataFrame) -> np.ndarray:
+    x1 = X["x1"].to_numpy(dtype=float)
+    x2 = X["x2"].to_numpy(dtype=float)
+    return np.tanh(0.8*x1 + 0.4*x2 + 0.6*x1*x2).astype(float)
+
 x0 = pd.Series({"x1": 0.0, "x2": 0.0})
 x1 = pd.Series({"x1": 1.0, "x2": 1.0})
 
 totals, within_pot = explain(
     g, x0, x1,
     backend="mc",
+    model_batch=g_batch,
     m=10,
     n_perms=300,
     seed=0
