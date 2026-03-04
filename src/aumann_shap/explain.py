@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable, Dict, Iterable, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
+import warnings
 
 from .tabular_gridstate import explain_tabular_gridstate
 
@@ -79,7 +80,51 @@ def _mc_totals_microplayers(
 
     totals_flat /= float(n_perms)
     return totals_flat.reshape(orig_shape)
+def _auto_model_batch(model: Callable, x0_schema):
+    """
+    Try to build an efficient batch scorer automatically.
+    Returns model_batch(X)->scores where X is np.ndarray shape (B, d).
+    Falls back to a safe per-row loop (slower) if no vectorized API exists.
+    """
+    cols = None
+    if isinstance(x0_schema, pd.Series):
+        cols = list(x0_schema.index)
+    elif isinstance(x0_schema, dict):
+        cols = list(x0_schema.keys())
 
+    # sklearn / xgboost style
+    if hasattr(model, "predict_proba"):
+        def _batch(X: np.ndarray) -> np.ndarray:
+            X_in = pd.DataFrame(X, columns=cols) if cols is not None else X
+            P = model.predict_proba(X_in)
+            P = np.asarray(P)
+            return P[:, -1] if P.ndim == 2 else P.reshape(-1)
+        return _batch
+
+    if hasattr(model, "predict"):
+        def _batch(X: np.ndarray) -> np.ndarray:
+            X_in = pd.DataFrame(X, columns=cols) if cols is not None else X
+            y = model.predict(X_in)
+            return np.asarray(y).reshape(-1)
+        return _batch
+
+    # generic callable fallback (correct but slower)
+    warnings.warn(
+        "backend='mc': no vectorized predictor detected; falling back to per-row calls (may be slow).",
+        UserWarning,
+    )
+
+    def _batch(X: np.ndarray) -> np.ndarray:
+        out = np.empty((X.shape[0],), dtype=float)
+        if cols is None:
+            for i in range(X.shape[0]):
+                out[i] = float(model(X[i]))
+        else:
+            for i in range(X.shape[0]):
+                out[i] = float(model(pd.Series(X[i], index=cols)))
+        return out
+
+    return _batch
 
 def explain(
     model: Callable,
@@ -124,6 +169,9 @@ def explain(
 
         if backend == "auto" and k > int(k_max_exact):
             backend = "mc"
+            # Keep schema for MC (feature names) so we can build per-row Series if needed
+            x0 = x0s
+            x1 = x1s
         else:
             res = explain_tabular_gridstate(
                 model=model,
@@ -137,7 +185,7 @@ def explain(
 
     # MC backend
     if model_batch is None:
-        raise ValueError("backend='mc' requires model_batch(X)->scores (vectorized batch function).")
+        model_batch = _auto_model_batch(model, x0)
 
     m_int = int(m) if isinstance(m, int) else int(min(m.values()))
     totals = _mc_totals_microplayers(
