@@ -107,7 +107,44 @@ def _auto_model_batch(model: Callable, x0_schema):
             y = model.predict(X_in)
             return np.asarray(y).reshape(-1)
         return _batch
+    # torch.nn.Module style (vision / deep models)
+    try:
+        import torch
+        import torch.nn as nn
+    except Exception:
+        torch = None
+        nn = None
 
+    if torch is not None and nn is not None and isinstance(model, nn.Module) and isinstance(x0_schema, (np.ndarray, torch.Tensor)):
+        # x0_schema carries the unflattened shape, e.g. (28,28) or (1,28,28)
+        shape = tuple(np.asarray(x0_schema).shape)
+        params = list(model.parameters())
+        device = params[0].device if params else torch.device("cpu")
+        model.eval()
+
+        @torch.no_grad()
+        def _batch(X: np.ndarray) -> np.ndarray:
+            X = np.asarray(X, dtype=np.float32)
+            B, d = X.shape
+            img = torch.from_numpy(X.reshape((B,) + shape)).to(device)
+
+            # If (B,H,W) -> make it (B,1,H,W)
+            if img.ndim == 3:
+                img = img.unsqueeze(1)
+
+            logits = model(img)
+
+            # Support binary or 2-class heads
+            if logits.ndim == 1:
+                probs = torch.sigmoid(logits)
+            elif logits.shape[1] == 1:
+                probs = torch.sigmoid(logits[:, 0])
+            else:
+                probs = torch.softmax(logits, dim=1)[:, -1]
+
+            return probs.detach().cpu().numpy()
+
+        return _batch
     # generic callable fallback (correct but slower)
     warnings.warn(
         "backend='mc': no vectorized predictor detected; falling back to per-row calls (may be slow).",
