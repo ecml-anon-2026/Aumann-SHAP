@@ -246,6 +246,9 @@ plt.colorbar(fraction=0.046, pad=0.04)
 plt.tight_layout()
 plt.show()
 ```
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/85bd4f42-26da-4277-9596-3400a05847ca" width="500" />
+</p>
 ![demo](https://github.com/user-attachments/assets/85bd4f42-26da-4277-9596-3400a05847ca)
 
 ## Project structure
