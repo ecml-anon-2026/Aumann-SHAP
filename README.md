@@ -136,13 +136,118 @@ print("within_pot:", within_pot)  # None for MC
 ```
 If your model supports batch prediction (sklearn/xgboost/torch), explain uses it automatically; otherwise it falls back to per-row evaluation (may be slower).
 ---
-##Usage for Vision (MNIST)
-requires 
+## Usage for Vision (MNIST)
+requires running train_mnist.py or having resnet18_mnist_1vs7.pt (provided in the MNIST experiment) in the same folder.
 ```python
+import numpy as np
+import torch
+import torch.nn as nn
+import matplotlib.pyplot as plt
+from torchvision import datasets, transforms
+from torchvision.models import resnet18
+from matplotlib.colors import TwoSlopeNorm
+from aumann_shap import explain
 
+# -----------------------------
+# Config
+# -----------------------------
+CKPT_PATH = "experiments/mnist/resnet18_mnist_1vs7.pt"
+idx0, idx1 = 2, 1809
+eps_changed = 0.05
 
+m = 10
+n_perms = 50
+seed = 0
 
+MEAN, STD = 0.1307, 0.3081
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# -----------------------------
+# Load MNIST endpoints in [0,1]
+# -----------------------------
+test_raw = datasets.MNIST(
+    root="data", train=False, download=True, transform=transforms.ToTensor()
+)
+x0_t, y0 = test_raw[idx0]
+x1_t, y1 = test_raw[idx1]
+x0 = x0_t[0].numpy()
+x1 = x1_t[0].numpy()
+
+# Use only "changed" pixels as the counterfactual endpoint (x_end)
+mask = np.abs(x1 - x0) > eps_changed
+x_end = x0.copy()
+x_end[mask] = x1[mask]
+
+# -----------------------------
+# Load trained ResNet-18 (1 vs 7)
+# -----------------------------
+def build_model():
+    mdl = resnet18(weights=None)
+    mdl.conv1 = nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1, bias=False)
+    mdl.maxpool = nn.Identity()
+    mdl.fc = nn.Linear(mdl.fc.in_features, 2)  # 0="1", 1="7"
+    return mdl
+
+model = build_model().to(device)
+ckpt = torch.load(CKPT_PATH, map_location=device)
+model.load_state_dict(ckpt["model_state"])
+model.eval()
+
+@torch.no_grad()
+def model_batch(X: np.ndarray) -> np.ndarray:
+    """
+    X: (B, 784) float array in [0,1]
+    returns: (B,) probabilities P(7|x)
+    """
+    X = torch.from_numpy(X.astype(np.float32)).to(device).view(-1, 1, 28, 28)
+    X = (X - MEAN) / STD
+    logits = model(X)
+    p7 = torch.softmax(logits, dim=1)[:, 1]
+    return p7.detach().cpu().numpy()
+
+# -----------------------------
+# Aumann-SHAP (MC micro-game Shapley totals)
+# -----------------------------
+totals, _ = explain(
+    model=model,                         # only used for schema; scoring comes from model_batch
+    x0=x0.reshape(-1),
+    x1=x_end.reshape(-1),
+    backend="mc",
+    model_batch=model_batch,
+    m=m,
+    n_perms=n_perms,
+    seed=seed,
+)
+
+heat = totals.reshape(28, 28).astype(float)
+
+# Keep ONLY changed pixels (everything else becomes NaN -> white)
+heat_only_changed = heat.copy()
+heat_only_changed[~mask] = np.nan
+
+# Diverging colormap with white at 0, and NaNs rendered white
+cmap = plt.get_cmap("RdBu").copy()
+cmap.set_bad(color="white")
+
+# Symmetric scaling so 0 is the white center
+vmax = np.nanmax(np.abs(heat_only_changed)) + 1e-12
+norm = TwoSlopeNorm(vcenter=0.0, vmin=-vmax, vmax=vmax)
+
+plt.figure(figsize=(10, 3))
+plt.subplot(1, 3, 1); plt.imshow(x0, cmap="gray", vmin=0, vmax=1);    plt.title("Baseline $x_0$"); plt.axis("off")
+plt.subplot(1, 3, 2); plt.imshow(x_end, cmap="gray", vmin=0, vmax=1); plt.title("Endpoint $x_{end}$"); plt.axis("off")
+
+plt.subplot(1, 3, 3)
+plt.imshow(heat_only_changed, cmap=cmap, norm=norm, interpolation="nearest")
+plt.title("Micro-game Shapley (changed pixels only)")
+plt.axis("off")
+plt.colorbar(fraction=0.046, pad=0.04)
+
+plt.tight_layout()
+plt.show()
 ```
+![demo](https://github.com/user-attachments/assets/85bd4f42-26da-4277-9596-3400a05847ca)
+
 ## Project structure
 
 docs/                 reproducibility + anonymity notes  
