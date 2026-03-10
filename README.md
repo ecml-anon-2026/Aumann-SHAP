@@ -137,7 +137,7 @@ print("within_pot:", within_pot)  # None for MC
 If your model supports batch prediction (sklearn/xgboost/torch), explain uses it automatically; otherwise it falls back to per-row evaluation (may be slower).
 ---
 ## Usage for Vision (MNIST)
-requires running train_mnist.py or having resnet18_mnist_1vs7.pt (provided in the MNIST experiment) in the same folder.
+requires running train_mnist.py (produces the resnet18_mnist_1vs7.pt).
 ```python
 import numpy as np
 import torch
@@ -151,7 +151,7 @@ from aumann_shap import explain
 # -----------------------------
 # Config
 # -----------------------------
-CKPT_PATH = "experiments/mnist/resnet18_mnist_1vs7.pt"
+CKPT_PATH = "resnet18_mnist_1vs7.pt"
 idx0, idx1 = 2, 1809
 eps_changed = 0.05
 
