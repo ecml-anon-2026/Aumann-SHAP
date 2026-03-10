@@ -81,7 +81,7 @@ Minimal usage:
   totals, within_pot = explain(model, x0, x1, backend="grid_state", m=5)
 
 - Monte Carlo backend (large k / pixels): returns (Totals, None)
-  totals, within_pot = explain(model, x0, x1, backend="mc", model_batch=..., m=10, n_perms=200)
+  totals, within_pot = explain(model, x0, x1, backend="mc", m=10, n_perms=200, seed=0)
 
 (Within-pot is only returned for the exact grid-state backend.)
 ## Usage for ML (Tabular data)
@@ -136,7 +136,13 @@ print("within_pot:", within_pot)  # None for MC
 ```
 If your model supports batch prediction (sklearn/xgboost/torch), explain uses it automatically; otherwise it falls back to per-row evaluation (may be slower).
 ---
+##Usage for Vision (MNIST)
+requires 
+```python
 
+
+
+```
 ## Project structure
 
 docs/                 reproducibility + anonymity notes  
