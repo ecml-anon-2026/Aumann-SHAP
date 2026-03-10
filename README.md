@@ -247,7 +247,7 @@ plt.tight_layout()
 plt.show()
 ```
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/85bd4f42-26da-4277-9596-3400a05847ca" width="800" />
+  <img src="https://github.com/user-attachments/assets/85bd4f42-26da-4277-9596-3400a05847ca" width="800" height="200" />
 </p>
 
 ## Project structure
